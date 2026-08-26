@@ -1,0 +1,31 @@
+import /init.recovery.platform.rc
+import /init.recovery.svc.rc
+import /init.recovery.touch.rc
+import /init.recovery.wifi.rc
+import /init.recovery.hardware.rc
+
+# Override init.rc early-init "setprop sys.usb.configfs 0" so the configfs
+# USB gadget tree is created at "on fs" (init.rc:133). Without it, adb cannot
+# be attached and the device never shows up in `adb devices`.
+on early-init
+    setprop sys.usb.configfs 1
+
+on init
+    setprop sys.usb.controller "16701000.usb0"
+
+on late-init
+    start mtk_storageproxyd
+
+on fs && property:ro.debuggable=0
+    # distinguish USB shoulde connect or not, i.e. CDP vs SDP
+    # set charging free due to it wait for USB activation
+
+on boot
+    exec u:r:update_engine:s0 root root -- /system/bin/mtk_plpath_utils
+    # Read-only slot info: write /tmp/slot_info.txt + setprop recovery.slot.info
+    exec u:r:recovery:s0 root root -- /system/bin/show_slot
+    # Read-only system info (version/usage/battery/reason/bcb/crypto) -> setprop recovery.info.*
+    exec u:r:recovery:s0 root root -- /system/bin/sysinfo
+    # Force-enable adb shell in recovery (ro.debuggable=0 disables it by default)
+    setprop sys.usb.config adb
+    setprop service.adb.root 1

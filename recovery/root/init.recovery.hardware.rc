@@ -1,0 +1,2 @@
+# 机型相关硬件初始化 rc。通常为空或放置设备专属 early init 指令。
+# 联发科平台主逻辑在 init.recovery.mt6991.rc。
